@@ -1,0 +1,28 @@
+.layout {
+    display: flex;
+}
+
+.content {
+    flex: 1;
+    background: #F5F7FA;
+    min-height: 100vh;
+}
+
+.page-content {
+    padding: 25px;
+}
+
+/* Dark Mode */
+
+.layout.dark {
+    background: #111827;
+    color: white;
+}
+
+.layout.dark .main-content {
+    background: #111827;
+}
+
+.layout.dark .content {
+    background: #111827;
+}

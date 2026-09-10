@@ -1,0 +1,494 @@
+/* =========================================
+   DASHBOARD PAGE
+========================================= */
+
+.dashboard-page {
+    width: 100%;
+    height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+
+/* =========================================
+   CHAT SECTION
+========================================= */
+
+.dashboard-container {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+
+    width: 100%;
+
+    display: flex;
+    gap: 20px;
+
+    overflow: hidden;
+}
+
+
+/* =========================================
+   CHAT LIST
+========================================= */
+
+.dashboard-container>.chat-list {
+    width: 350px;
+    min-width: 300px;
+    max-width: 350px;
+
+    height: 100%;
+
+    background: white;
+
+    border-radius: 12px;
+
+    border: 1px solid #e5e7eb;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+/* =========================================
+   CHAT WINDOW
+========================================= */
+
+.dashboard-container>.chat-window {
+    flex: 1;
+
+    min-width: 0;
+    min-height: 0;
+
+    height: 100%;
+
+    background: #f8fafc;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+}
+
+/* =========================================
+   GROUP CHAT
+========================================= */
+
+.dashboard-container>.group-chat {
+    width: 320px;
+    min-width: 280px;
+    max-width: 320px;
+
+    height: 100%;
+
+    background: white;
+
+    border-radius: 12px;
+
+    border: 1px solid #e5e7eb;
+
+    overflow: hidden;
+}
+
+
+/* =========================================
+   RESPONSIVE - TABLET
+========================================= */
+
+@media (max-width: 1024px) {
+
+    .dashboard-page {
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .dashboard-container {
+        gap: 15px;
+    }
+
+    .dashboard-container>.chat-list {
+        width: 300px;
+        min-width: 280px;
+    }
+
+    .dashboard-container>.group-chat {
+        width: 280px;
+        min-width: 250px;
+    }
+}
+
+
+/* =========================================
+   RESPONSIVE - MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+
+    .dashboard-page {
+        height: auto;
+        min-height: calc(100vh - 70px);
+        overflow: visible;
+    }
+
+    .dashboard-container {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+
+    .dashboard-container>.chat-list {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        height: 350px;
+    }
+
+    .dashboard-container>.chat-window {
+        width: 100%;
+        height: 600px;
+        min-height: 600px;
+    }
+
+    .dashboard-container>.group-chat {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        height: 600px;
+    }
+}
+
+/* =========================================
+   GROUPS PAGE
+========================================= */
+
+.groups-page {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* Make GroupChat use the available dashboard area */
+
+.groups-page .group-chat {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+
+    box-sizing: border-box;
+}
+
+/* =========================================
+   GLOBAL DASHBOARD TEXT COLOR
+========================================= */
+
+.dashboard-page {
+    color: #111827;
+}
+
+/* Dashboard cards */
+.dashboard-page h1,
+.dashboard-page h2,
+.dashboard-page h3,
+.dashboard-page h4,
+.dashboard-page h5,
+.dashboard-page h6,
+.dashboard-page p,
+.dashboard-page span,
+.dashboard-page strong,
+.dashboard-page small {
+    color: #111827;
+}
+
+/* =========================================
+   CHATS PAGE
+========================================= */
+
+.chats-page {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.chats-page .dashboard-container {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+/* =========================================
+   CHAT LIST + CHAT WINDOW
+========================================= */
+
+.chats-page .dashboard-container {
+    gap: 20px;
+    width: 100%;
+    overflow: hidden;
+}
+
+
+/* Chat list */
+
+.chats-page .dashboard-container>.chat-list {
+    flex: 0 0 320px;
+    width: 320px;
+    min-width: 280px;
+    max-width: 320px;
+
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+/* Chat window */
+
+.chats-page .dashboard-container>.chat-window {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+
+    height: 100%;
+    overflow: hidden;
+}
+
+/* =========================================
+   CHATS PAGE - MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+
+    .chats-page {
+        height: auto;
+        min-height: calc(100vh - 70px);
+    }
+
+    .chats-page .dashboard-container {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+
+    .chats-page .dashboard-container>.chat-list {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        height: 350px;
+        flex: none;
+    }
+
+    .chats-page .dashboard-container>.chat-window {
+        width: 100%;
+        height: 600px;
+        min-height: 600px;
+        flex: none;
+    }
+}
+
+/* =========================================
+   MAIN PAGE CONSISTENCY
+========================================= */
+
+.dashboard-page {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* Dashboard */
+
+.dashboard-page>.dashboard-container {
+    min-width: 0;
+}
+
+
+/* Chats */
+
+.chats-page {
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+
+/* Groups */
+
+.groups-page {
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+
+/* Prevent long text from breaking the layout */
+
+.chats-page *,
+.groups-page * {
+    box-sizing: border-box;
+}
+
+.empty-chat {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    color: #777;
+
+    min-height: 500px;
+}
+
+.empty-chat-icon {
+    font-size: 60px;
+
+    margin-bottom: 15px;
+}
+
+.empty-chat h2 {
+    margin-bottom: 8px;
+
+    color: #333;
+}
+
+.empty-chat p {
+    font-size: 15px;
+
+    max-width: 300px;
+
+    line-height: 1.6;
+}
+
+.users-loading {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 500px;
+
+    font-size: 16px;
+
+    color: #777;
+}
+
+.no-users {
+    width: 100%;
+
+    min-height: 500px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    color: #777;
+}
+
+.no-users-icon {
+    font-size: 50px;
+
+    margin-bottom: 15px;
+}
+
+.no-users h3 {
+    margin-bottom: 8px;
+
+    color: #333;
+}
+
+.no-users p {
+    max-width: 300px;
+
+    line-height: 1.6;
+}
+
+.empty-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+
+    background-color: #ffffff;
+
+    color: #374151;
+
+    padding: 40px;
+}
+
+.empty-chat-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+.empty-chat h2 {
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.empty-chat p {
+    color: #6b7280;
+    font-size: 15px;
+    max-width: 300px;
+    line-height: 1.6;
+}
+
+.empty-chat {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    background: #ffffff;
+    min-height: 500px;
+
+    border-left: 1px solid #e5e7eb;
+}
+
+.empty-chat-icon {
+    font-size: 70px;
+    margin-bottom: 15px;
+
+    opacity: 0.9;
+}
+
+.empty-chat h2 {
+    margin: 0;
+
+    font-size: 24px;
+    font-weight: 600;
+
+    color: #1f2937;
+}
+
+.empty-chat p {
+    margin-top: 10px;
+
+    color: #6b7280;
+
+    font-size: 15px;
+}

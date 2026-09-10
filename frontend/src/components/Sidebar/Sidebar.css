@@ -1,0 +1,74 @@
+.sidebar {
+    width: 250px;
+    min-width: 250px;
+    height: calc(100vh - 70px);
+    background: #0f172a;
+    color: white;
+    padding: 20px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.menu {
+    list-style: none;
+    padding: 0;
+}
+
+.menu li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.menu li:hover {
+    background: #2563eb;
+}
+
+.menu li svg {
+    font-size: 18px;
+}
+
+/* Active sidebar item */
+
+.sidebar .menu li.active {
+    background: #2563eb;
+    color: white;
+    border-radius: 8px;
+}
+
+/* =========================================
+   NOTIFICATION BADGE
+========================================= */
+
+.notification-badge {
+    margin-left: auto;
+
+    min-width: 20px;
+    height: 20px;
+
+    padding: 0 6px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #ef4444;
+    color: #ffffff;
+
+    border-radius: 10px;
+
+    font-size: 11px;
+    font-weight: 600;
+}
