@@ -75,66 +75,55 @@ function GroupChat() {
 
     // Fetch messages when group changes
     useEffect(() => {
+        if (!selectedGroup || !accessToken) {
+            setMessages([]);
+            return;
+        }
 
-        const fetchGroupMessages = async () => {
+        let isMounted = true;
 
-            if (
-                !selectedGroup ||
-                !accessToken
-            ) {
-                setMessages([]);
-                return;
-            }
-
+        const fetchGroupMessages = async (isInitial = false) => {
             try {
+                if (isInitial) {
+                    setLoading(true);
+                }
 
-                setLoading(true);
-
-                const response =
-                    await getGroupMessages(
-                        accessToken,
-                        selectedGroup.id
-                    );
-
-                const formattedMessages =
-                    response.data.map((msg) => ({
-
-                        id: msg.id,
-
-                        sender: msg.sender,
-
-                        text: msg.text,
-
-                        time: new Date(
-                            msg.created_at
-                        ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        }),
-
-                    }));
-
-                setMessages(formattedMessages);
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to fetch group messages:",
-                    error
+                const response = await getGroupMessages(
+                    accessToken,
+                    selectedGroup.id
                 );
 
-                setMessages([]);
+                if (!isMounted) return;
 
+                const formattedMessages = response.data.map((msg) => ({
+                    id: msg.id,
+                    sender: msg.sender,
+                    text: msg.text,
+                    file: msg.file,
+                    message_type: msg.message_type,
+                    time: new Date(msg.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }),
+                }));
+
+                setMessages(formattedMessages);
+            } catch (error) {
+                console.error("Failed to fetch group messages:", error);
             } finally {
-
-                setLoading(false);
-
+                if (isMounted && isInitial) {
+                    setLoading(false);
+                }
             }
-
         };
 
-        fetchGroupMessages();
+        fetchGroupMessages(true);
+        const interval = setInterval(() => fetchGroupMessages(false), 3000);
 
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, [selectedGroup, accessToken]);
 
     // Fetch users for creating a group
@@ -475,7 +464,6 @@ function GroupChat() {
                         ) : (
 
                             messages.map((msg) => (
-
                                 <div
                                     key={msg.id}
                                     className={
@@ -484,21 +472,45 @@ function GroupChat() {
                                             : "group-message received"
                                     }
                                 >
+                                    <strong>{msg.sender}</strong>
 
-                                    <strong>
-                                        {msg.sender}
-                                    </strong>
+                                    {msg.text && <p>{msg.text}</p>}
 
-                                    <p>
-                                        {msg.text}
-                                    </p>
+                                    {msg.file && msg.message_type === "image" && (
+                                        <div className="group-file-attachment">
+                                            <img
+                                                src={msg.file}
+                                                alt="Attachment"
+                                                className="group-file-image"
+                                            />
+                                        </div>
+                                    )}
 
-                                    <small>
-                                        {msg.time}
-                                    </small>
+                                    {msg.file && msg.message_type === "audio" && (
+                                        <div className="group-file-attachment">
+                                            <audio
+                                                controls
+                                                src={msg.file}
+                                                className="group-audio-player"
+                                            />
+                                        </div>
+                                    )}
 
+                                    {msg.file && msg.message_type === "file" && (
+                                        <div className="group-file-attachment">
+                                            <a
+                                                href={msg.file}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="group-file-download"
+                                            >
+                                                📎 Download Attachment
+                                            </a>
+                                        </div>
+                                    )}
+
+                                    <small>{msg.time}</small>
                                 </div>
-
                             ))
 
                         )}

@@ -125,77 +125,49 @@ function Notifications() {
                 </button>
             </div>
 
-
             <div className="notifications-list">
-                {notifications.map((notification) => (
+                {notifications.length === 0 ? (
+                    <div className="no-notifications">
+                        <div className="no-notifications-icon">🔔</div>
+                        <h3>No notifications</h3>
+                        <p>You're all caught up! New notifications will appear here.</p>
+                    </div>
+                ) : (
+                    notifications.map((notification) => (
 
-                    <div
-                        key={notification.id}
-                        className={
-                            notification.read
-                                ? "notification-item read"
-                                : "notification-item unread"
-                        }
-                    >
+                        <div
+                            key={notification.id}
+                            className={
+                                notification.read
+                                    ? "notification-item read"
+                                    : "notification-item unread"
+                            }
+                        >
 
-                        <div className="notification-icon">
-                            {notification.icon}
+                            <div className="notification-icon">
+                                {notification.icon}
+                            </div>
+
+                            <div className="notification-content">
+
+                                <h4>
+                                    {notification.title}
+                                </h4>
+
+                                <p>
+                                    {notification.text}
+                                </p>
+
+                                <span>
+                                    {notification.time}
+                                </span>
+
+                            </div>
+
                         </div>
 
-                        <div className="notification-content">
-
-                            <h4>
-                                {notification.title}
-                            </h4>
-
-                            <p>
-                                {notification.text}
-                            </p>
-
-                            <span>
-                                {notification.time}
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                ))}
-
-
-                <div className="notification-item">
-
-                    <div className="notification-icon">
-                        👥
-                    </div>
-
-                    <div className="notification-content">
-                        <h4>Group activity</h4>
-                        <p>
-                            There is new activity in MCA Friends.
-                        </p>
-                        <span>10 minutes ago</span>
-                    </div>
-
-                </div>
-
-
-                <div className="notification-item">
-
-                    <div className="notification-icon">
-                        🔔
-                    </div>
-
-                    <div className="notification-content">
-                        <h4>Welcome to ChatPlatform</h4>
-                        <p>
-                            Your account is ready to use.
-                        </p>
-                        <span>Today</span>
-                    </div>
-
-                </div>
-
+                    ))
+                )}
             </div>
 
         </div>

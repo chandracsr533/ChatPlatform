@@ -32,7 +32,12 @@ function Layout({
 
             <div className="content">
 
-                <Navbar />
+                <Navbar
+                    activePage={activePage}
+                    setActivePage={setActivePage}
+                    unreadNotifications={unreadNotifications}
+                    setUnreadNotifications={setUnreadNotifications}
+                />
 
                 <div className="page-content">
                     {children}

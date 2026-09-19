@@ -155,18 +155,40 @@ export const getGroupMessages = (
 };
 
 
+// Register user
+export const registerUser = (userData) => {
+    return API.post("/accounts/register/", userData);
+};
+
 // Send message
 export const sendMessage = (
     accessToken,
     receiverId,
-    text
+    text,
+    file = null,
+    messageType = "text"
 ) => {
+    if (file) {
+        const formData = new FormData();
+        formData.append("receiver", receiverId);
+        if (text) formData.append("text", text);
+        formData.append("file", file);
+        formData.append("message_type", messageType);
+
+        return API.post("/accounts/messages/", formData, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
 
     return API.post(
         "/accounts/messages/",
         {
             receiver: receiverId,
             text: text,
+            message_type: messageType,
         },
         {
             headers: {
@@ -180,13 +202,29 @@ export const sendMessage = (
 export const sendGroupMessage = (
     accessToken,
     groupId,
-    text
+    text,
+    file = null,
+    messageType = "text"
 ) => {
+    if (file) {
+        const formData = new FormData();
+        if (text) formData.append("text", text);
+        formData.append("file", file);
+        formData.append("message_type", messageType);
+
+        return API.post(`/accounts/groups/${groupId}/messages/`, formData, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
 
     return API.post(
         `/accounts/groups/${groupId}/messages/`,
         {
             text: text,
+            message_type: messageType,
         },
         {
             headers: {
@@ -194,6 +232,33 @@ export const sendGroupMessage = (
             },
         }
     );
+};
+
+// Delete message
+export const deleteMessage = (accessToken, messageId) => {
+    return API.delete(`/accounts/messages/${messageId}/`, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+};
+
+// Update message (edit text or update reaction)
+export const updateMessage = (accessToken, messageId, data) => {
+    return API.patch(`/accounts/messages/${messageId}/`, data, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+};
+
+// Get dashboard stats
+export const getDashboardStats = (accessToken) => {
+    return API.get("/accounts/dashboard-stats/", {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
 };
 
 // Get notifications

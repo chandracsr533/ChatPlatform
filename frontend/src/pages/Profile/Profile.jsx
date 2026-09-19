@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./Profile.css";
+import { getAvatarGradient, getInitials } from "../../utils/avatar";
 
 function Profile() {
     const [profile, setProfile] = useState({
@@ -55,11 +56,13 @@ function Profile() {
                     setProfile(userProfile);
                     setEditProfile(userProfile);
 
-                    // Keep username available for existing frontend features
-                    localStorage.setItem(
-                        "username",
-                        userProfile.username
-                    );
+                    localStorage.setItem("username", userProfile.username);
+                    if (userProfile.profileImage) {
+                        localStorage.setItem("profileImage", userProfile.profileImage);
+                    } else {
+                        localStorage.removeItem("profileImage");
+                    }
+                    window.dispatchEvent(new Event("storage"));
                 } else {
                     console.error(
                         "Failed to update profile:",
@@ -130,6 +133,8 @@ function Profile() {
                     "profile_image",
                     editProfile.profileImage
                 );
+            } else if (!editProfile.profileImage) {
+                formData.append("remove_image", "true");
             }
 
             const response = await fetch(
@@ -159,6 +164,12 @@ function Profile() {
                     "username",
                     updatedProfile.username
                 );
+                if (updatedProfile.profileImage) {
+                    localStorage.setItem("profileImage", updatedProfile.profileImage);
+                } else {
+                    localStorage.removeItem("profileImage");
+                }
+                window.dispatchEvent(new Event("storage"));
 
                 setIsEditing(false);
                 setMessage("Profile updated successfully!");
@@ -208,21 +219,25 @@ function Profile() {
 
                 <div className="profile-image-container">
 
-                    <div className="profile-image">
-
+                    <div
+                        className="profile-image"
+                        style={!profile.profileImage ? { background: getAvatarGradient(profile.username) } : {}}
+                    >
                         {profile.profileImage ? (
                             <img
                                 src={profile.profileImage}
                                 alt="Profile"
+                                onError={(e) => {
+                                    e.target.style.display = "none";
+                                    const span = e.target.parentElement.querySelector("span");
+                                    if (span) span.style.display = "block";
+                                    e.target.parentElement.style.background = getAvatarGradient(profile.username);
+                                }}
                             />
-                        ) : (
-                            <span>
-                                {profile.username
-                                    .charAt(0)
-                                    .toUpperCase()}
-                            </span>
-                        )}
-
+                        ) : null}
+                        <span style={{ display: profile.profileImage ? "none" : "block" }}>
+                            {getInitials(profile.username)}
+                        </span>
                     </div>
 
                 </div>

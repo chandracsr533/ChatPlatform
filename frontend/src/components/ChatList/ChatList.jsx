@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./ChatList.css";
 import { FaSearch } from "react-icons/fa";
+import { getAvatarGradient, getInitials } from "../../utils/avatar";
 
 
 /*
@@ -194,8 +195,8 @@ function ChatList({
 
                     <div
                         className={`chat-user ${selectedChat?.id === user.id
-                                ? "active-chat"
-                                : ""
+                            ? "active-chat"
+                            : ""
                             }`}
                         key={user.id}
                         onClick={() =>
@@ -209,16 +210,28 @@ function ChatList({
                         ========================= */}
 
                         <div className="avatar">
-
-                            {userImage && (
-
+                            {userImage ? (
                                 <img
                                     src={userImage}
                                     alt={userName}
                                     className="avatar-img"
+                                    onError={(e) => {
+                                        e.target.style.display = "none";
+                                        const fb = e.target.parentElement.querySelector(".avatar-fallback");
+                                        if (fb) fb.style.display = "flex";
+                                    }}
                                 />
+                            ) : null}
 
-                            )}
+                            <div
+                                className="avatar-fallback"
+                                style={{
+                                    display: userImage ? "none" : "flex",
+                                    background: getAvatarGradient(userName),
+                                }}
+                            >
+                                {getInitials(userName)}
+                            </div>
 
 
                             <span

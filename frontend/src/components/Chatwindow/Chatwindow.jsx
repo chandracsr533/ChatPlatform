@@ -14,6 +14,8 @@ import ChatHeader from "../ChatHeader/ChatHeader";
 import {
     getMessages,
     sendMessage,
+    deleteMessage,
+    updateMessage,
     getProfile,
 } from "../../services/api";
 const reactions = [
@@ -62,8 +64,6 @@ function ChatWindow({
                 return;
             }
 
-            console.log("Selected Chat:", selectedChat);
-            console.log("Selected Chat ID:", selectedChat?.id);
             try {
 
                 const response = await getMessages(
@@ -81,6 +81,10 @@ function ChatWindow({
 
                     text: msg.text,
 
+                    fileUrl: msg.file || null,
+
+                    fileName: msg.file ? msg.file.split("/").pop() : "",
+
                     time: new Date(
                         msg.created_at
                     ).toLocaleTimeString([], {
@@ -90,12 +94,12 @@ function ChatWindow({
 
                     status:
                         msg.sender === currentUsername
-                            ? "sent"
+                            ? (msg.is_read ? "read" : "sent")
                             : "read",
 
-                    type: "text",
+                    type: msg.message_type || "text",
 
-                    reaction: "",
+                    reaction: msg.reaction || "",
                 }));
 
                 setMessages((previousMessages) => {
@@ -106,7 +110,9 @@ function ChatWindow({
                         previousMessages.some(
                             (message, index) =>
                                 message.id !== backendMessages[index]?.id ||
-                                message.text !== backendMessages[index]?.text
+                                message.text !== backendMessages[index]?.text ||
+                                message.reaction !== backendMessages[index]?.reaction ||
+                                message.status !== backendMessages[index]?.status
                         );
 
                     // If nothing changed, keep the existing messages
@@ -186,37 +192,107 @@ function ChatWindow({
         });
     }, [messages]);
 
-    const handleDeleteMessage = (id) => {
-        setMessages((prevMessages) =>
-            prevMessages.filter((msg) => msg.id !== id)
-        );
+    const handleDeleteMessage = async (id) => {
+        if (!accessToken) return;
 
-        setSelectedMessage(null);
+        try {
+            await deleteMessage(accessToken, id);
+            setMessages((prevMessages) =>
+                prevMessages.filter((msg) => msg.id !== id)
+            );
+        } catch (err) {
+            console.error("Failed to delete message:", err);
+            alert("Failed to delete message.");
+        } finally {
+            setSelectedMessage(null);
+        }
     };
-    const handleFileUpload = (e) => {
+
+    const handleSaveEdit = async (msgId) => {
+        if (!accessToken || !editingText.trim()) {
+            setEditingId(null);
+            setEditingText("");
+            return;
+        }
+
+        try {
+            await updateMessage(accessToken, msgId, { text: editingText.trim() });
+            setMessages((prev) =>
+                prev.map((m) =>
+                    m.id === msgId ? { ...m, text: editingText.trim() } : m
+                )
+            );
+        } catch (err) {
+            console.error("Failed to edit message:", err);
+            alert("Failed to edit message.");
+        } finally {
+            setEditingId(null);
+            setEditingText("");
+        }
+    };
+
+    const handleReaction = async (msgId, emoji) => {
+        if (!accessToken) return;
+
+        try {
+            await updateMessage(accessToken, msgId, { reaction: emoji });
+            setMessages((prev) =>
+                prev.map((m) =>
+                    m.id === msgId ? { ...m, reaction: emoji } : m
+                )
+            );
+        } catch (err) {
+            console.error("Failed to update reaction:", err);
+        } finally {
+            setSelectedMessage(null);
+        }
+    };
+
+    const handleFileUpload = async (e) => {
         const file = e.target.files[0];
 
-        if (!file) return;
+        if (!file || !selectedChat?.id || !accessToken) return;
 
         const isImage = file.type.startsWith("image/");
+        const messageType = isImage ? "image" : "file";
 
-        const newMessage = {
-            id: Date.now(),
-            sender: "Me",
-            type: isImage ? "image" : "file",
-            fileName: file.name,
-            fileUrl: URL.createObjectURL(file),
-            time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-            status: "sent",
-            reaction: "",
-        };
+        try {
+            setIsSending(true);
+            const response = await sendMessage(
+                accessToken,
+                selectedChat.id,
+                "",
+                file,
+                messageType
+            );
 
-        setMessages((prev) => [...prev, newMessage]);
+            const savedMessage = response.data;
+            const newMessage = {
+                id: savedMessage.id,
+                sender: "Me",
+                text: savedMessage.text,
+                fileUrl: savedMessage.file,
+                fileName: file.name,
+                time: new Date(
+                    savedMessage.created_at
+                ).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                }),
+                status: "sent",
+                type: messageType,
+                reaction: "",
+            };
 
-        e.target.value = "";
+            setMessages((prev) => [...prev, newMessage]);
+
+        } catch (err) {
+            console.error("Failed to upload file:", err);
+            alert("Failed to send file. Please try again.");
+        } finally {
+            setIsSending(false);
+            e.target.value = "";
+        }
     };
 
     const handleVoiceRecording = async () => {
@@ -239,28 +315,55 @@ function ChatWindow({
                     audioChunksRef.current.push(event.data);
                 };
 
-                mediaRecorder.onstop = () => {
+                mediaRecorder.onstop = async () => {
 
                     const audioBlob = new Blob(audioChunksRef.current, {
                         type: "audio/webm",
                     });
 
-                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioFile = new File(
+                        [audioBlob],
+                        `voice_${Date.now()}.webm`,
+                        { type: "audio/webm" }
+                    );
 
-                    const voiceMessage = {
-                        id: Date.now(),
-                        sender: "Me",
-                        type: "audio",
-                        audio: audioUrl,
-                        time: new Date().toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        }),
-                        status: "sent",
-                        reaction: "",
-                    };
+                    if (!selectedChat?.id || !accessToken) return;
 
-                    setMessages((prev) => [...prev, voiceMessage]);
+                    try {
+                        setIsSending(true);
+                        const response = await sendMessage(
+                            accessToken,
+                            selectedChat.id,
+                            "",
+                            audioFile,
+                            "audio"
+                        );
+
+                        const savedMessage = response.data;
+                        const voiceMessage = {
+                            id: savedMessage.id,
+                            sender: "Me",
+                            type: "audio",
+                            fileUrl: savedMessage.file,
+                            text: savedMessage.text,
+                            time: new Date(
+                                savedMessage.created_at
+                            ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            }),
+                            status: "sent",
+                            reaction: "",
+                        };
+
+                        setMessages((prev) => [...prev, voiceMessage]);
+
+                    } catch (err) {
+                        console.error("Failed to upload voice note:", err);
+                        alert("Failed to send voice recording.");
+                    } finally {
+                        setIsSending(false);
+                    }
                 };
 
                 mediaRecorder.start();
@@ -417,7 +520,7 @@ function ChatWindow({
                                 className="chat-audio"
                             >
                                 <source
-                                    src={msg.audio}
+                                    src={msg.fileUrl || msg.audio}
                                     type="audio/webm"
                                 />
                                 Your browser does not support audio.
@@ -431,17 +534,7 @@ function ChatWindow({
                                 onChange={(e) => setEditingText(e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
-
-                                        setMessages((prev) =>
-                                            prev.map((m) =>
-                                                m.id === msg.id
-                                                    ? { ...m, text: editingText }
-                                                    : m
-                                            )
-                                        );
-
-                                        setEditingId(null);
-                                        setEditingText("");
+                                        handleSaveEdit(msg.id);
                                     }
                                 }}
                                 autoFocus
@@ -489,12 +582,7 @@ function ChatWindow({
                                 className="delete-btn"
                                 onClick={(e) => {
                                     e.stopPropagation();
-
-                                    setMessages((prevMessages) =>
-                                        prevMessages.filter((m) => m.id !== msg.id)
-                                    );
-
-                                    setSelectedMessage(null);
+                                    handleDeleteMessage(msg.id);
                                 }}
                             >
                                 🗑 Delete
@@ -545,19 +633,7 @@ function ChatWindow({
                                         className="reaction-option"
                                         onClick={(e) => {
                                             e.stopPropagation();
-
-                                            setMessages((prev) =>
-                                                prev.map((m) =>
-                                                    m.id === msg.id
-                                                        ? {
-                                                            ...m,
-                                                            reaction: emoji,
-                                                        }
-                                                        : m
-                                                )
-                                            );
-
-                                            setSelectedMessage(null);
+                                            handleReaction(msg.id, emoji);
                                         }}
                                     >
                                         {emoji}

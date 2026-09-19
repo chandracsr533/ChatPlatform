@@ -56,9 +56,29 @@ class MessageSerializer(serializers.ModelSerializer):
             "sender",
             "receiver",
             "text",
+            "file",
+            "message_type",
+            "reaction",
             "is_read",
             "created_at",
         ]
+        extra_kwargs = {
+            "text": {"required": False, "allow_blank": True},
+            "file": {"required": False, "allow_null": True},
+            "reaction": {"required": False, "allow_blank": True},
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.file:
+            request = self.context.get("request")
+            if request:
+                data["file"] = request.build_absolute_uri(instance.file.url)
+            else:
+                data["file"] = instance.file.url
+        else:
+            data["file"] = None
+        return data
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -101,8 +121,26 @@ class GroupMessageSerializer(serializers.ModelSerializer):
             "group",
             "sender",
             "text",
+            "file",
+            "message_type",
             "created_at",
         ]
+        extra_kwargs = {
+            "text": {"required": False, "allow_blank": True},
+            "file": {"required": False, "allow_null": True},
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.file:
+            request = self.context.get("request")
+            if request:
+                data["file"] = request.build_absolute_uri(instance.file.url)
+            else:
+                data["file"] = instance.file.url
+        else:
+            data["file"] = None
+        return data
 class ProfileSerializer(serializers.ModelSerializer):
 
     username = serializers.CharField(

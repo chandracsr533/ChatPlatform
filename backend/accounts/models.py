@@ -1,3 +1,5 @@
+
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -44,7 +46,24 @@ class Message(models.Model):
         related_name="received_messages"
     )
 
-    text = models.TextField()
+    text = models.TextField(blank=True, default="")
+
+    file = models.FileField(
+        upload_to="chat_files/",
+        blank=True,
+        null=True
+    )
+
+    message_type = models.CharField(
+        max_length=20,
+        default="text"
+    )
+
+    reaction = models.CharField(
+        max_length=20,
+        blank=True,
+        default=""
+    )
 
     is_read = models.BooleanField(
         default=False
@@ -94,7 +113,18 @@ class GroupMessage(models.Model):
         related_name="group_messages"
     )
 
-    text = models.TextField()
+    text = models.TextField(blank=True, default="")
+
+    file = models.FileField(
+        upload_to="group_files/",
+        blank=True,
+        null=True
+    )
+
+    message_type = models.CharField(
+        max_length=20,
+        default="text"
+    )
 
     created_at = models.DateTimeField(
         auto_now_add=True

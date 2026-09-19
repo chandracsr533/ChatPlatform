@@ -1,3 +1,4 @@
+
 from django.urls import path
 
 from .views import (
@@ -5,11 +6,13 @@ from .views import (
     ProfileView,
     UsersListView,
     MessageListCreateView,
+    MessageDetailView,
     GroupListCreateView,
     GroupMessageListCreateView,
     NotificationListView,
     MarkAllNotificationsReadView,
     OnlineStatusView,
+    DashboardStatsView,
 )
 
 from rest_framework_simplejwt.views import (
@@ -56,6 +59,12 @@ urlpatterns = [
         name="messages"
     ),
 
+    path(
+        "messages/<int:pk>/",
+        MessageDetailView.as_view(),
+        name="message_detail"
+    ),
+
     # Group Chat APIs
     path(
         "groups/",
@@ -86,4 +95,9 @@ path(
     OnlineStatusView.as_view(),
     name="online-status"
 ),
+    path(
+        "dashboard-stats/",
+        DashboardStatsView.as_view(),
+        name="dashboard_stats"
+    ),
 ]

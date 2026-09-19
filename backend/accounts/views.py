@@ -1,3 +1,5 @@
+
+
 from django.utils import timezone
 
 from rest_framework import generics
@@ -79,6 +81,12 @@ class ProfileView(APIView):
             user=request.user
         )
 
+        if request.data.get("remove_image") in ["true", True, "1"]:
+            if profile.profile_image:
+                profile.profile_image.delete(save=False)
+            profile.profile_image = None
+            profile.save()
+
         serializer = ProfileSerializer(
             profile,
             data=request.data,
@@ -140,7 +148,7 @@ class UsersListView(APIView):
 
     def get(self, request):
 
-        users = User.objects.all()
+        users = User.objects.exclude(id=request.user.id)
 
         data = []
 
@@ -157,12 +165,24 @@ class UsersListView(APIView):
             else:
                 last_seen = None
 
+            unread_count = Message.objects.filter(
+                sender=user,
+                receiver=request.user,
+                is_read=False
+            ).count()
+
+            profile_image = ""
+            if profile.profile_image:
+                profile_image = request.build_absolute_uri(profile.profile_image.url)
+
             data.append({
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
                 "is_online": profile.is_online,
                 "last_seen": last_seen,
+                "unread_count": unread_count,
+                "image": profile_image,
             })
 
         return Response(data)
@@ -180,18 +200,31 @@ class MessageListCreateView(APIView):
                 status=400
             )
 
+        # Mark all incoming messages from this user as read
+        Message.objects.filter(
+            sender_id=receiver_id,
+            receiver=request.user,
+            is_read=False
+        ).update(is_read=True)
+
         messages = Message.objects.filter(
             Q(sender=request.user, receiver_id=receiver_id) |
             Q(sender_id=receiver_id, receiver=request.user)
         ).order_by("created_at")
 
-        serializer = MessageSerializer(messages, many=True)
+        serializer = MessageSerializer(
+            messages,
+            many=True,
+            context={"request": request}
+        )
 
         return Response(serializer.data)
 
     def post(self, request):
         receiver_id = request.data.get("receiver")
-        text = request.data.get("text")
+        text = request.data.get("text", "")
+        file = request.FILES.get("file")
+        message_type = request.data.get("message_type", "text")
 
         if not receiver_id:
             return Response(
@@ -199,9 +232,9 @@ class MessageListCreateView(APIView):
                 status=400
             )
 
-        if not text:
+        if not text and not file:
             return Response(
-                {"error": "text is required"},
+                {"error": "text or file is required"},
                 status=400
             )
 
@@ -216,10 +249,24 @@ class MessageListCreateView(APIView):
         message = Message.objects.create(
             sender=request.user,
             receiver=receiver,
-            text=text
+            text=text,
+            file=file,
+            message_type=message_type
         )
 
-        serializer = MessageSerializer(message)
+        # Automatically create notification for receiver
+        notification_preview = text if text else f"Sent a {message_type}"
+        Notification.objects.create(
+            recipient=receiver,
+            notification_type="message",
+            title=f"New message from {request.user.username}",
+            message=notification_preview[:100],
+        )
+
+        serializer = MessageSerializer(
+            message,
+            context={"request": request}
+        )
 
         return Response(serializer.data, status=201)
 
@@ -305,18 +352,21 @@ class GroupMessageListCreateView(APIView):
 
         serializer = GroupMessageSerializer(
             messages,
-            many=True
+            many=True,
+            context={"request": request}
         )
 
         return Response(serializer.data)
 
     def post(self, request, group_id):
 
-        text = request.data.get("text")
+        text = request.data.get("text", "")
+        file = request.FILES.get("file")
+        message_type = request.data.get("message_type", "text")
 
-        if not text:
+        if not text and not file:
             return Response(
-                {"error": "text is required"},
+                {"error": "text or file is required"},
                 status=400
             )
 
@@ -341,11 +391,24 @@ class GroupMessageListCreateView(APIView):
         message = GroupMessage.objects.create(
             group=group,
             sender=request.user,
-            text=text
+            text=text,
+            file=file,
+            message_type=message_type
         )
 
+        # Notify other group members
+        notification_preview = text if text else f"Shared a {message_type}"
+        for member in group.members.exclude(id=request.user.id):
+            Notification.objects.create(
+                recipient=member,
+                notification_type="group",
+                title=f"New message in {group.name}",
+                message=f"{request.user.username}: {notification_preview[:100]}",
+            )
+
         serializer = GroupMessageSerializer(
-            message
+            message,
+            context={"request": request}
         )
 
         return Response(
@@ -393,4 +456,65 @@ class MarkAllNotificationsReadView(APIView):
 
         return Response({
             "message": "All notifications marked as read."
+        })
+
+
+class MessageDetailView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        try:
+            message = Message.objects.get(pk=pk)
+        except Message.DoesNotExist:
+            return Response({"error": "Message not found"}, status=404)
+
+        if message.sender != request.user:
+            return Response({"error": "You can only delete your own messages"}, status=403)
+
+        message.delete()
+        return Response({"message": "Message deleted successfully"}, status=200)
+
+    def patch(self, request, pk):
+        try:
+            message = Message.objects.get(pk=pk)
+        except Message.DoesNotExist:
+            return Response({"error": "Message not found"}, status=404)
+
+        # Allow sender to edit text
+        if "text" in request.data:
+            if message.sender != request.user:
+                return Response({"error": "You can only edit your own messages"}, status=403)
+            message.text = request.data["text"]
+
+        # Allow participants to add/update reaction
+        if "reaction" in request.data:
+            if request.user != message.sender and request.user != message.receiver:
+                return Response({"error": "Not authorized to react to this message"}, status=403)
+            message.reaction = request.data["reaction"]
+
+        message.save()
+        serializer = MessageSerializer(message, context={"request": request})
+        return Response(serializer.data)
+
+
+class DashboardStatsView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        direct_count = Message.objects.filter(
+            Q(sender=request.user) | Q(receiver=request.user)
+        ).count()
+
+        user_groups = Group.objects.filter(members=request.user)
+        group_count = user_groups.count()
+        group_messages_count = GroupMessage.objects.filter(group__in=user_groups).count()
+
+        online_users_count = UserProfile.objects.filter(is_online=True).count()
+
+        return Response({
+            "messages_count": direct_count + group_messages_count,
+            "groups_count": group_count,
+            "online_users_count": online_users_count,
         })

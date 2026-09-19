@@ -12,7 +12,6 @@ import Settings from "../Settings/Settings";
 
 import Notifications from "../Notifications/Notifications";
 
-import chatData from "../../data/chatData";
 import {
     getUsers,
     getNotifications,
@@ -119,10 +118,7 @@ function Dashboard() {
 
                         email: user.email,
 
-                        image:
-                            chatData[
-                                index % chatData.length
-                            ]?.image,
+                        image: user.image || "",
 
                         lastMessage:
                             "No messages yet",
@@ -135,10 +131,9 @@ function Dashboard() {
 
                         // Use real Django last seen
                         lastSeen:
-                            // user.last_seen || "Offline",
                             user.last_seen || null,
 
-                        unread: 0,
+                        unread: user.unread_count || 0,
 
                         messages: [],
 
@@ -167,8 +162,9 @@ function Dashboard() {
                                 newUser.time,
 
                             unread:
-                                existingUser?.unread ||
-                                0,
+                                selectedChat?.id === newUser.id
+                                    ? 0
+                                    : newUser.unread,
 
                             messages:
                                 existingUser?.messages ||
@@ -276,13 +272,10 @@ function Dashboard() {
             }
         }
 
-        localStorage.removeItem(
-            "accessToken"
-        );
-
-        localStorage.removeItem(
-            "refreshToken"
-        );
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("username");
+        localStorage.removeItem("profileImage");
 
         navigate("/login");
     };
